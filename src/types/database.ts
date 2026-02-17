@@ -9,7 +9,7 @@ export type TaskType = 'multiple_choice' | 'short_answer' | 'open_ended'
 
 export interface User {
   id: string
-  email: string
+  username: string
   role: UserRole
   name: string
   created_at: string

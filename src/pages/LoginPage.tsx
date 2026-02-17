@@ -3,30 +3,30 @@ import { useAuthStore } from '@/store/authStore'
 import { GraduationCap, LogIn } from 'lucide-react'
 
 const quickLogins = [
-  { label: 'Учитель (Адильби)', email: 'adilbi@olympiad.kz', password: 'adilbi123', color: '#1B3A5C' },
-  { label: 'Родитель (Мама)', email: 'mama@olympiad.kz', password: 'mama123', color: '#2A9D8F' },
-  { label: 'Маржан (ученик)', email: 'marzhan@olympiad.kz', password: 'marzhan123', color: '#7B2D8E' },
-  { label: 'Батырхан (ученик)', email: 'batyrkhan@olympiad.kz', password: 'batyrkhan123', color: '#2E5D8A' },
+  { label: 'Учитель (Адильби)', username: 'adilbi', password: 'adilbi123', color: '#1B3A5C' },
+  { label: 'Родитель (Эльмира)', username: 'elmira', password: 'elmira123', color: '#2A9D8F' },
+  { label: 'Маржан (ученик)', username: 'marzhan', password: 'marzhan123', color: '#7B2D8E' },
+  { label: 'Батырхан (ученик)', username: 'batyrkhan', password: 'batyrkhan123', color: '#2E5D8A' },
 ]
 
 export default function LoginPage() {
   const { login, loading } = useAuthStore()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    const ok = await login(email, password)
-    if (!ok) setError('Неверный email или пароль')
+    const ok = await login(username, password)
+    if (!ok) setError('Неверный логин или пароль')
   }
 
-  const handleQuickLogin = async (em: string, pw: string) => {
-    setEmail(em)
+  const handleQuickLogin = async (un: string, pw: string) => {
+    setUsername(un)
     setPassword(pw)
     setError('')
-    await login(em, pw)
+    await login(un, pw)
   }
 
   return (
@@ -44,13 +44,13 @@ export default function LoginPage() {
         {/* Форма входа */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text mb-1">Email</label>
+            <label className="block text-sm font-medium text-text mb-1">Логин</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-2.5 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
-              placeholder="email@olympiad.kz"
+              placeholder="username"
             />
           </div>
           <div>
@@ -88,8 +88,8 @@ export default function LoginPage() {
         <div className="grid grid-cols-2 gap-2">
           {quickLogins.map((ql) => (
             <button
-              key={ql.email}
-              onClick={() => handleQuickLogin(ql.email, ql.password)}
+              key={ql.username}
+              onClick={() => handleQuickLogin(ql.username, ql.password)}
               className="flex items-center gap-2 p-3 border-2 rounded-xl transition hover:shadow-md text-left"
               style={{ borderColor: `${ql.color}30`, backgroundColor: `${ql.color}05` }}
             >

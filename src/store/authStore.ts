@@ -3,35 +3,35 @@ import type { User } from '@/types/database'
 import { seedStudents } from '@/lib/seedData'
 
 // Пользователи системы
-const USERS: { email: string; password: string; user: User; studentId?: string }[] = [
+const USERS: { username: string; password: string; user: User; studentId?: string }[] = [
   {
-    email: 'adilbi@olympiad.kz',
+    username: 'adilbi',
     password: 'adilbi123',
     user: {
       id: 'teacher-1',
-      email: 'adilbi@olympiad.kz',
+      username: 'adilbi',
       role: 'teacher',
       name: 'Адильби',
       created_at: new Date().toISOString(),
     },
   },
   {
-    email: 'mama@olympiad.kz',
-    password: 'mama123',
+    username: 'elmira',
+    password: 'elmira123',
     user: {
       id: 'parent-1',
-      email: 'mama@olympiad.kz',
+      username: 'elmira',
       role: 'parent',
-      name: 'Мама',
+      name: 'Эльмира',
       created_at: new Date().toISOString(),
     },
   },
   {
-    email: 'marzhan@olympiad.kz',
+    username: 'marzhan',
     password: 'marzhan123',
     user: {
       id: 'student-marzhan',
-      email: 'marzhan@olympiad.kz',
+      username: 'marzhan',
       role: 'student',
       name: 'Маржан',
       created_at: new Date().toISOString(),
@@ -39,11 +39,11 @@ const USERS: { email: string; password: string; user: User; studentId?: string }
     studentId: 'student-marzhan',
   },
   {
-    email: 'batyrkhan@olympiad.kz',
+    username: 'batyrkhan',
     password: 'batyrkhan123',
     user: {
       id: 'student-batyrkhan',
-      email: 'batyrkhan@olympiad.kz',
+      username: 'batyrkhan',
       role: 'student',
       name: 'Батырхан',
       created_at: new Date().toISOString(),
@@ -56,7 +56,7 @@ interface AuthState {
   user: User | null
   studentId: string | null
   loading: boolean
-  login: (email: string, password: string) => Promise<boolean>
+  login: (username: string, password: string) => Promise<boolean>
   loginAsDemo: (role: 'teacher' | 'parent' | 'student') => void
   loginByToken: (token: string) => boolean
   logout: () => void
@@ -67,10 +67,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   studentId: null,
   loading: false,
 
-  login: async (email: string, password: string) => {
+  login: async (username: string, password: string) => {
     set({ loading: true })
     const found = USERS.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+      (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password
     )
     if (found) {
       set({ user: found.user, studentId: found.studentId || null, loading: false })
@@ -86,7 +86,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({
         user: {
           id: student.id,
-          email: '',
+          username: '',
           role: 'student',
           name: student.name,
           created_at: new Date().toISOString(),
@@ -107,7 +107,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       user: {
         id: student.id,
-        email: '',
+        username: '',
         role: 'student',
         name: student.name,
         created_at: new Date().toISOString(),
