@@ -147,3 +147,32 @@ export interface StudentSubmission {
   is_correct?: boolean
   submitted_at: string
 }
+
+// Бонусная система
+export type BadgeType =
+  | 'first_task'       // Первая задача
+  | 'streak_3'         // 3 дня подряд
+  | 'streak_7'         // 7 дней подряд
+  | 'perfect_assignment' // Все верно в задании
+  | 'speed_demon'      // Быстрый ответ
+  | 'points_50'        // Набрал 50 баллов
+  | 'points_100'       // Набрал 100 баллов
+  | 'points_250'       // Набрал 250 баллов
+  | 'olympiad_ready'   // Прошёл все задания перед олимпиадой
+
+export interface StudentBadge {
+  id: string
+  student_id: string
+  badge_type: BadgeType
+  earned_at: string
+}
+
+export interface Resource {
+  id: string
+  title: string
+  author: string
+  description: string
+  grade_level: string       // '4', '5', '4-5'
+  category: string          // 'olympiad' | 'textbook' | 'reference'
+  topics: string[]          // связанные темы из KnowledgeBase
+}

@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useDataStore } from '@/store/dataStore'
 import { useAuthStore } from '@/store/authStore'
-import { ArrowLeft, CheckCircle, XCircle, Camera, Send, Clock } from 'lucide-react'
+import { BONUS_CONFIG } from '@/lib/seedData'
+import { ArrowLeft, CheckCircle, XCircle, Camera, Send, Clock, Star } from 'lucide-react'
 import type { AssignmentTask, StudentSubmission } from '@/types/database'
 
 export default function StudentTaskPage() {
@@ -12,7 +13,7 @@ export default function StudentTaskPage() {
   const [currentTaskIdx, setCurrentTaskIdx] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [textAnswer, setTextAnswer] = useState('')
-  const [feedback, setFeedback] = useState<{ correct: boolean; answer: string } | null>(null)
+  const [feedback, setFeedback] = useState<{ correct: boolean; answer: string; pointsEarned: number } | null>(null)
 
   const assignment = assignments.find((a) => a.id === assignmentId)
   const tasks = assignmentTasks
@@ -43,16 +44,23 @@ export default function StudentTaskPage() {
     }
 
     addSubmission(submission)
+
+    const earned = isCorrect === true
+      ? BONUS_CONFIG.points_per_correct
+      : isCorrect === false
+      ? BONUS_CONFIG.points_per_attempt
+      : BONUS_CONFIG.points_per_open_ended
+
     setFeedback({
       correct: isCorrect ?? true,
       answer: task.correct_answer,
+      pointsEarned: earned,
     })
     setSelectedOption(null)
     setTextAnswer('')
   }
 
   const handlePhotoUpload = (task: AssignmentTask) => {
-    // Симуляция загрузки фото
     if (!studentId) return
     const submission: StudentSubmission = {
       id: `sub-${Date.now()}`,
@@ -64,7 +72,11 @@ export default function StudentTaskPage() {
       submitted_at: new Date().toISOString(),
     }
     addSubmission(submission)
-    setFeedback({ correct: true, answer: 'Решение отправлено на проверку учителю' })
+    setFeedback({
+      correct: true,
+      answer: 'Решение отправлено на проверку учителю',
+      pointsEarned: BONUS_CONFIG.points_per_open_ended,
+    })
     setTextAnswer('')
   }
 
@@ -106,6 +118,10 @@ export default function StudentTaskPage() {
           <p className="text-xs text-text-secondary">
             Задача {currentTaskIdx + 1} из {tasks.length} • Выполнено: {completedCount}/{tasks.length}
           </p>
+        </div>
+        <div className="flex items-center gap-1 px-2.5 py-1 bg-accent/10 rounded-lg">
+          <Star className="w-3.5 h-3.5 text-accent fill-accent" />
+          <span className="text-xs font-bold text-accent">{currentTask.points} б.</span>
         </div>
       </div>
 
@@ -152,11 +168,11 @@ export default function StudentTaskPage() {
           }`}>
             <div className="flex items-center gap-2">
               {existingSubmission.is_correct === true ? (
-                <><CheckCircle className="w-5 h-5 text-success" /><span className="font-medium text-success">Верно!</span></>
+                <><CheckCircle className="w-5 h-5 text-success" /><span className="font-medium text-success">Верно! +{BONUS_CONFIG.points_per_correct} б.</span></>
               ) : existingSubmission.is_correct === false ? (
-                <><XCircle className="w-5 h-5 text-danger" /><span className="font-medium text-danger">Неверно</span></>
+                <><XCircle className="w-5 h-5 text-danger" /><span className="font-medium text-danger">Неверно (+{BONUS_CONFIG.points_per_attempt} за попытку)</span></>
               ) : (
-                <><Clock className="w-5 h-5 text-warning" /><span className="font-medium text-warning">Отправлено на проверку</span></>
+                <><Clock className="w-5 h-5 text-warning" /><span className="font-medium text-warning">Отправлено (+{BONUS_CONFIG.points_per_open_ended} б.)</span></>
               )}
             </div>
             <p className="text-sm text-text-secondary mt-1">Твой ответ: {existingSubmission.answer_text}</p>
@@ -247,18 +263,27 @@ export default function StudentTaskPage() {
           </>
         ) : null}
 
-        {/* Фидбек после ответа */}
+        {/* Фидбек после ответа с баллами */}
         {feedback && (
           <div className={`rounded-xl p-3 mt-3 ${feedback.correct ? 'bg-success/10' : 'bg-danger/10'}`}>
-            <div className="flex items-center gap-2">
-              {feedback.correct ? (
-                <><CheckCircle className="w-5 h-5 text-success" /><span className="font-medium text-success">Верно!</span></>
-              ) : (
-                <><XCircle className="w-5 h-5 text-danger" /><span className="font-medium text-danger">Неверно</span></>
-              )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {feedback.correct ? (
+                  <><CheckCircle className="w-5 h-5 text-success" /><span className="font-medium text-success">Верно!</span></>
+                ) : (
+                  <><XCircle className="w-5 h-5 text-danger" /><span className="font-medium text-danger">Неверно</span></>
+                )}
+              </div>
+              <span className={`text-sm font-bold flex items-center gap-1 ${feedback.correct ? 'text-success' : 'text-warning'}`}>
+                <Star className="w-4 h-4 fill-current" />
+                +{feedback.pointsEarned}
+              </span>
             </div>
-            {!feedback.correct && (
+            {!feedback.correct && feedback.answer && feedback.answer !== 'Решение отправлено на проверку учителю' && (
               <p className="text-sm text-text-secondary mt-1">Правильный ответ: {feedback.answer}</p>
+            )}
+            {feedback.answer === 'Решение отправлено на проверку учителю' && (
+              <p className="text-sm text-text-secondary mt-1">Решение отправлено на проверку учителю</p>
             )}
           </div>
         )}
