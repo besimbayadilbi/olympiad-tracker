@@ -14,7 +14,7 @@ export default function ParentLayout() {
             <GraduationCap className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-bold text-sm">Олимпиадный Трекер</h1>
+            <h1 className="font-bold text-sm">МатМастер</h1>
             <p className="text-xs text-white/60">Кабинет родителя</p>
           </div>
         </div>

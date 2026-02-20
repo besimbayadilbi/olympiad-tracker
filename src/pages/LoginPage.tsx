@@ -2,13 +2,6 @@ import { useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { GraduationCap, LogIn } from 'lucide-react'
 
-const quickLogins = [
-  { label: 'Учитель (Адильби)', username: 'adilbi', password: 'adilbi123', color: '#1B3A5C' },
-  { label: 'Родитель (Эльмира)', username: 'elmira', password: 'elmira123', color: '#2A9D8F' },
-  { label: 'Маржан (ученик)', username: 'marzhan', password: 'marzhan123', color: '#7B2D8E' },
-  { label: 'Батырхан (ученик)', username: 'batyrkhan', password: 'batyrkhan123', color: '#2E5D8A' },
-]
-
 export default function LoginPage() {
   const { login, loading } = useAuthStore()
   const [username, setUsername] = useState('')
@@ -22,13 +15,6 @@ export default function LoginPage() {
     if (!ok) setError('Неверный логин или пароль')
   }
 
-  const handleQuickLogin = async (un: string, pw: string) => {
-    setUsername(un)
-    setPassword(pw)
-    setError('')
-    await login(un, pw)
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary to-primary-light flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
@@ -37,8 +23,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-accent/10 rounded-2xl mb-4">
             <GraduationCap className="w-8 h-8 text-accent" />
           </div>
-          <h1 className="text-2xl font-bold text-primary">Олимпиадный Трекер</h1>
-          <p className="text-text-secondary mt-1">Подготовка к FEMO</p>
+          <h1 className="text-2xl font-bold text-primary">МатМастер</h1>
+          <p className="text-text-secondary mt-1">Платформа для занятий математикой</p>
         </div>
 
         {/* Форма входа */}
@@ -73,38 +59,6 @@ export default function LoginPage() {
             {loading ? 'Входим...' : 'Войти'}
           </button>
         </form>
-
-        {/* Разделитель */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-text-secondary">быстрый вход</span>
-          </div>
-        </div>
-
-        {/* Быстрый вход */}
-        <div className="grid grid-cols-2 gap-2">
-          {quickLogins.map((ql) => (
-            <button
-              key={ql.username}
-              onClick={() => handleQuickLogin(ql.username, ql.password)}
-              className="flex items-center gap-2 p-3 border-2 rounded-xl transition hover:shadow-md text-left"
-              style={{ borderColor: `${ql.color}30`, backgroundColor: `${ql.color}05` }}
-            >
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                style={{ backgroundColor: ql.color }}
-              >
-                {ql.label[0]}
-              </div>
-              <span className="text-xs font-medium leading-tight" style={{ color: ql.color }}>
-                {ql.label}
-              </span>
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 {
-  "name": "Олимпиадный Трекер",
-  "short_name": "ОлимпТрекер",
-  "description": "Трекер подготовки к олимпиадам по математике",
+  "name": "МатМастер",
+  "short_name": "МатМастер",
+  "description": "Платформа для занятий математикой",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8FAFC",
