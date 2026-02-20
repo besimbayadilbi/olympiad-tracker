@@ -1,19 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useDataStore } from '@/store/dataStore'
 import { useAuthStore } from '@/store/authStore'
 import { BONUS_CONFIG } from '@/lib/seedData'
-import { ArrowLeft, CheckCircle, XCircle, Camera, Send, Clock, Star } from 'lucide-react'
+import { ArrowLeft, CheckCircle, XCircle, Camera, Send, Clock, Star, Zap, RotateCcw, Timer } from 'lucide-react'
 import type { AssignmentTask, StudentSubmission } from '@/types/database'
 
 export default function StudentTaskPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const studentId = useAuthStore((s) => s.studentId)
-  const { assignments, assignmentTasks, studentSubmissions, addSubmission } = useDataStore()
+  const { assignments, assignmentTasks, studentSubmissions, addSubmission, retrySubmission } = useDataStore()
   const [currentTaskIdx, setCurrentTaskIdx] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [textAnswer, setTextAnswer] = useState('')
-  const [feedback, setFeedback] = useState<{ correct: boolean; answer: string; pointsEarned: number } | null>(null)
+  const [feedback, setFeedback] = useState<{ correct: boolean; answer: string; pointsEarned: number; fast?: boolean } | null>(null)
+  const [isRetrying, setIsRetrying] = useState(false)
+
+  // Timer
+  const [elapsed, setElapsed] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startTimeRef = useRef<number>(Date.now())
 
   const assignment = assignments.find((a) => a.id === assignmentId)
   const tasks = assignmentTasks
@@ -26,9 +32,42 @@ export default function StudentTaskPage() {
     return studentSubmissions.find((s) => s.assignment_task_id === taskId && s.student_id === studentId)
   }
 
+  // Запускаем таймер при смене задачи
+  useEffect(() => {
+    const sub = currentTask ? getSubmission(currentTask.id) : undefined
+    if (currentTask && !sub && !feedback) {
+      startTimeRef.current = Date.now()
+      setElapsed(0)
+      timerRef.current = setInterval(() => {
+        setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000))
+      }, 1000)
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTaskIdx, isRetrying])
+
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    return Math.floor((Date.now() - startTimeRef.current) / 1000)
+  }
+
+  const formatTime = (s: number) => {
+    const min = Math.floor(s / 60)
+    const sec = s % 60
+    return `${min}:${sec.toString().padStart(2, '0')}`
+  }
+
   const handleSubmit = (task: AssignmentTask) => {
     const answer = task.task_type === 'multiple_choice' ? selectedOption : textAnswer
     if (!answer || !studentId) return
+
+    const timeSpent = stopTimer()
+    const isFast = timeSpent <= BONUS_CONFIG.speed_bonus_seconds
 
     const isCorrect = task.task_type !== 'open_ended'
       ? answer.trim().toLowerCase() === task.correct_answer.trim().toLowerCase()
@@ -40,28 +79,48 @@ export default function StudentTaskPage() {
       student_id: studentId,
       answer_text: answer,
       is_correct: isCorrect,
+      is_retry: isRetrying,
+      time_spent_seconds: timeSpent,
       submitted_at: new Date().toISOString(),
     }
 
     addSubmission(submission)
 
-    const earned = isCorrect === true
-      ? BONUS_CONFIG.points_per_correct
-      : isCorrect === false
-      ? BONUS_CONFIG.points_per_attempt
-      : BONUS_CONFIG.points_per_open_ended
+    let earned = 0
+    if (isCorrect === true) {
+      earned = isRetrying ? BONUS_CONFIG.points_per_retry : BONUS_CONFIG.points_per_correct
+    } else if (isCorrect === false) {
+      earned = BONUS_CONFIG.points_per_attempt
+    } else {
+      earned = BONUS_CONFIG.points_per_open_ended
+    }
 
     setFeedback({
       correct: isCorrect ?? true,
       answer: task.correct_answer,
       pointsEarned: earned,
+      fast: isFast && isCorrect === true,
     })
     setSelectedOption(null)
     setTextAnswer('')
+    setIsRetrying(false)
+  }
+
+  const handleRetry = (task: AssignmentTask) => {
+    if (!studentId) return
+    retrySubmission(task.id, studentId)
+    setIsRetrying(true)
+    setFeedback(null)
+    startTimeRef.current = Date.now()
+    setElapsed(0)
+    timerRef.current = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000))
+    }, 1000)
   }
 
   const handlePhotoUpload = (task: AssignmentTask) => {
     if (!studentId) return
+    const timeSpent = stopTimer()
     const submission: StudentSubmission = {
       id: `sub-${Date.now()}`,
       assignment_task_id: task.id,
@@ -69,6 +128,7 @@ export default function StudentTaskPage() {
       answer_text: textAnswer || 'Фото решения загружено',
       answer_image_url: 'photo-placeholder.jpg',
       is_correct: undefined,
+      time_spent_seconds: timeSpent,
       submitted_at: new Date().toISOString(),
     }
     addSubmission(submission)
@@ -84,6 +144,7 @@ export default function StudentTaskPage() {
     if (currentTaskIdx < tasks.length - 1) {
       setCurrentTaskIdx(currentTaskIdx + 1)
       setFeedback(null)
+      setIsRetrying(false)
     }
   }
 
@@ -91,6 +152,7 @@ export default function StudentTaskPage() {
     if (currentTaskIdx > 0) {
       setCurrentTaskIdx(currentTaskIdx - 1)
       setFeedback(null)
+      setIsRetrying(false)
     }
   }
 
@@ -105,6 +167,7 @@ export default function StudentTaskPage() {
 
   const existingSubmission = getSubmission(currentTask.id)
   const completedCount = tasks.filter((t) => getSubmission(t.id)).length
+  const showInput = !existingSubmission || isRetrying
 
   return (
     <div className="space-y-4">
@@ -119,9 +182,23 @@ export default function StudentTaskPage() {
             Задача {currentTaskIdx + 1} из {tasks.length} • Выполнено: {completedCount}/{tasks.length}
           </p>
         </div>
-        <div className="flex items-center gap-1 px-2.5 py-1 bg-accent/10 rounded-lg">
-          <Star className="w-3.5 h-3.5 text-accent fill-accent" />
-          <span className="text-xs font-bold text-accent">{currentTask.points} б.</span>
+        <div className="flex items-center gap-2">
+          {/* Таймер */}
+          {showInput && !feedback && (
+            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
+              elapsed <= BONUS_CONFIG.speed_bonus_seconds ? 'bg-yellow-50 text-yellow-600' : 'bg-gray-100 text-text-secondary'
+            }`}>
+              <Timer className="w-3.5 h-3.5" />
+              <span className="text-xs font-mono font-bold">{formatTime(elapsed)}</span>
+              {elapsed <= BONUS_CONFIG.speed_bonus_seconds && <Zap className="w-3 h-3 text-yellow-500" />}
+            </div>
+          )}
+          <div className="flex items-center gap-1 px-2.5 py-1 bg-accent/10 rounded-lg">
+            <Star className="w-3.5 h-3.5 text-accent fill-accent" />
+            <span className="text-xs font-bold text-accent">
+              {isRetrying ? BONUS_CONFIG.points_per_retry : currentTask.points} б.
+            </span>
+          </div>
         </div>
       </div>
 
@@ -132,7 +209,7 @@ export default function StudentTaskPage() {
           return (
             <button
               key={task.id}
-              onClick={() => { setCurrentTaskIdx(idx); setFeedback(null) }}
+              onClick={() => { setCurrentTaskIdx(idx); setFeedback(null); setIsRetrying(false) }}
               className={`h-2 flex-1 rounded-full transition ${
                 sub
                   ? sub.is_correct === true ? 'bg-success' : sub.is_correct === false ? 'bg-danger' : 'bg-warning'
@@ -154,13 +231,17 @@ export default function StudentTaskPage() {
             {currentTask.task_type === 'multiple_choice' ? 'Выбери ответ' :
              currentTask.task_type === 'short_answer' ? 'Впиши ответ' : 'Решение с фото'}
           </span>
-          <span className="text-xs text-text-secondary">{currentTask.points} б.</span>
+          {isRetrying && (
+            <span className="text-xs px-2 py-0.5 rounded-lg font-medium bg-yellow-100 text-yellow-700">
+              Повторная попытка (+{BONUS_CONFIG.points_per_retry} б.)
+            </span>
+          )}
         </div>
 
         <p className="font-medium mt-3 mb-4 text-base leading-relaxed">{currentTask.question}</p>
 
-        {/* Если уже отвечали */}
-        {existingSubmission && !feedback ? (
+        {/* Если уже отвечали и не делаем retry */}
+        {existingSubmission && !feedback && !isRetrying ? (
           <div className={`rounded-xl p-3 ${
             existingSubmission.is_correct === true ? 'bg-success/10' :
             existingSubmission.is_correct === false ? 'bg-danger/10' :
@@ -168,19 +249,48 @@ export default function StudentTaskPage() {
           }`}>
             <div className="flex items-center gap-2">
               {existingSubmission.is_correct === true ? (
-                <><CheckCircle className="w-5 h-5 text-success" /><span className="font-medium text-success">Верно! +{BONUS_CONFIG.points_per_correct} б.</span></>
+                <>
+                  <CheckCircle className="w-5 h-5 text-success" />
+                  <span className="font-medium text-success">
+                    Верно! +{existingSubmission.is_retry ? BONUS_CONFIG.points_per_retry : BONUS_CONFIG.points_per_correct} б.
+                  </span>
+                  {existingSubmission.time_spent_seconds && existingSubmission.time_spent_seconds <= BONUS_CONFIG.speed_bonus_seconds && (
+                    <span className="ml-1 flex items-center gap-0.5 text-yellow-600 text-xs font-medium">
+                      <Zap className="w-3.5 h-3.5" /> Молния!
+                    </span>
+                  )}
+                </>
               ) : existingSubmission.is_correct === false ? (
-                <><XCircle className="w-5 h-5 text-danger" /><span className="font-medium text-danger">Неверно (+{BONUS_CONFIG.points_per_attempt} за попытку)</span></>
+                <>
+                  <XCircle className="w-5 h-5 text-danger" />
+                  <span className="font-medium text-danger">Неверно (+{BONUS_CONFIG.points_per_attempt} за попытку)</span>
+                </>
               ) : (
-                <><Clock className="w-5 h-5 text-warning" /><span className="font-medium text-warning">Отправлено (+{BONUS_CONFIG.points_per_open_ended} б.)</span></>
+                <>
+                  <Clock className="w-5 h-5 text-warning" />
+                  <span className="font-medium text-warning">Отправлено (+{BONUS_CONFIG.points_per_open_ended} б.)</span>
+                </>
               )}
             </div>
             <p className="text-sm text-text-secondary mt-1">Твой ответ: {existingSubmission.answer_text}</p>
+            {existingSubmission.time_spent_seconds != null && (
+              <p className="text-xs text-text-secondary mt-0.5">Время: {formatTime(existingSubmission.time_spent_seconds)}</p>
+            )}
             {existingSubmission.is_correct === false && (
-              <p className="text-sm text-text-secondary mt-1">Правильный ответ: {currentTask.correct_answer}</p>
+              <>
+                <p className="text-sm text-text-secondary mt-1">Правильный ответ: {currentTask.correct_answer}</p>
+                {/* Кнопка повторной попытки */}
+                <button
+                  onClick={() => handleRetry(currentTask)}
+                  className="mt-3 w-full py-2.5 bg-yellow-50 border-2 border-yellow-200 text-yellow-700 rounded-xl text-sm font-medium hover:bg-yellow-100 transition flex items-center justify-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Попробовать снова (+{BONUS_CONFIG.points_per_retry} б. за верный)
+                </button>
+              </>
             )}
           </div>
-        ) : !existingSubmission ? (
+        ) : showInput && !feedback ? (
           <>
             {/* Варианты ответа (multiple_choice) */}
             {currentTask.task_type === 'multiple_choice' && currentTask.options && (
@@ -269,9 +379,20 @@ export default function StudentTaskPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {feedback.correct ? (
-                  <><CheckCircle className="w-5 h-5 text-success" /><span className="font-medium text-success">Верно!</span></>
+                  <>
+                    <CheckCircle className="w-5 h-5 text-success" />
+                    <span className="font-medium text-success">Верно!</span>
+                    {feedback.fast && (
+                      <span className="flex items-center gap-0.5 text-yellow-600 text-xs font-bold bg-yellow-100 px-2 py-0.5 rounded-lg">
+                        <Zap className="w-3.5 h-3.5" /> Молния!
+                      </span>
+                    )}
+                  </>
                 ) : (
-                  <><XCircle className="w-5 h-5 text-danger" /><span className="font-medium text-danger">Неверно</span></>
+                  <>
+                    <XCircle className="w-5 h-5 text-danger" />
+                    <span className="font-medium text-danger">Неверно</span>
+                  </>
                 )}
               </div>
               <span className={`text-sm font-bold flex items-center gap-1 ${feedback.correct ? 'text-success' : 'text-warning'}`}>
@@ -280,7 +401,19 @@ export default function StudentTaskPage() {
               </span>
             </div>
             {!feedback.correct && feedback.answer && feedback.answer !== 'Решение отправлено на проверку учителю' && (
-              <p className="text-sm text-text-secondary mt-1">Правильный ответ: {feedback.answer}</p>
+              <>
+                <p className="text-sm text-text-secondary mt-1">Правильный ответ: {feedback.answer}</p>
+                {/* Кнопка повторной попытки из фидбека */}
+                {currentTask.task_type !== 'open_ended' && (
+                  <button
+                    onClick={() => handleRetry(currentTask)}
+                    className="mt-3 w-full py-2.5 bg-yellow-50 border-2 border-yellow-200 text-yellow-700 rounded-xl text-sm font-medium hover:bg-yellow-100 transition flex items-center justify-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Попробовать снова (+{BONUS_CONFIG.points_per_retry} б. за верный)
+                  </button>
+                )}
+              </>
             )}
             {feedback.answer === 'Решение отправлено на проверку учителю' && (
               <p className="text-sm text-text-secondary mt-1">Решение отправлено на проверку учителю</p>

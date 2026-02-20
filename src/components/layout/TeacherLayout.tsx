@@ -41,8 +41,8 @@ export default function TeacherLayout() {
             <GraduationCap className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-bold text-sm">Мат</h1>
-            <h1 className="font-bold text-sm">Мастер</h1>
+            <h1 className="font-bold text-sm">Трекер</h1>
+            <h1 className="font-bold text-sm">Занятий</h1>
           </div>
           <button className="lg:hidden ml-auto" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
@@ -87,7 +87,7 @@ export default function TeacherLayout() {
           <button onClick={() => setSidebarOpen(true)}>
             <Menu className="w-6 h-6 text-primary" />
           </button>
-          <h1 className="font-bold text-primary">МатМастер</h1>
+          <h1 className="font-bold text-primary">Трекер Занятий</h1>
         </header>
 
         <main className="p-4 lg:p-6 max-w-7xl mx-auto">

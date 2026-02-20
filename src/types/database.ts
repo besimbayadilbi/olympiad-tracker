@@ -145,7 +145,27 @@ export interface StudentSubmission {
   answer_text?: string
   answer_image_url?: string  // фото работы
   is_correct?: boolean
+  is_retry?: boolean         // повторная попытка
+  time_spent_seconds?: number // время решения задачи
   submitted_at: string
+}
+
+// Магазин наград
+export interface RewardItem {
+  id: string
+  title: string
+  description: string
+  cost: number        // стоимость в баллах
+  emoji: string
+  category: 'lesson' | 'gift' | 'privilege'
+}
+
+export interface RewardRedemption {
+  id: string
+  student_id: string
+  reward_id: string
+  redeemed_at: string
+  status: 'pending' | 'fulfilled'
 }
 
 // Бонусная система

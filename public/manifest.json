@@ -1,7 +1,7 @@
 {
-  "name": "МатМастер",
-  "short_name": "МатМастер",
-  "description": "Платформа для занятий математикой",
+  "name": "Трекер Занятий",
+  "short_name": "Трекер",
+  "description": "Платформа для занятий",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8FAFC",

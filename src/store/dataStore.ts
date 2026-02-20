@@ -3,6 +3,7 @@ import type {
   Student, Schedule, LessonPlan, LessonResult,
   KnowledgeBase, OlympiadEvent, MockResult, WeeklyReport,
   Assignment, AssignmentTask, StudentSubmission, Resource, StudentBadge, BadgeType,
+  RewardRedemption,
 } from '@/types/database'
 import {
   seedStudents, seedSchedule, seedLessonPlans, seedKnowledgeBase,
@@ -24,6 +25,7 @@ interface DataState {
   studentSubmissions: StudentSubmission[]
   resources: Resource[]
   badges: StudentBadge[]
+  rewardRedemptions: RewardRedemption[]
   initialized: boolean
 
   init: () => void
@@ -35,10 +37,14 @@ interface DataState {
   addAssignment: (assignment: Assignment) => void
   addAssignmentTask: (task: AssignmentTask) => void
   addSubmission: (submission: StudentSubmission) => void
+  retrySubmission: (taskId: string, studentId: string) => void
+  redeemReward: (rewardId: string, studentId: string) => boolean
   getAssignmentsByStudent: (studentId: string) => Assignment[]
   getTasksByAssignment: (assignmentId: string) => AssignmentTask[]
   getSubmissionsByStudent: (studentId: string) => StudentSubmission[]
   getStudentPoints: (studentId: string) => number
+  getStudentSpentPoints: (studentId: string) => number
+  getStudentAvailablePoints: (studentId: string) => number
   getStudentLevel: (studentId: string) => { name: string; emoji: string; min_points: number; nextLevel?: typeof BONUS_CONFIG.levels[0] }
   getStudentBadges: (studentId: string) => StudentBadge[]
   checkAndAwardBadges: (studentId: string) => void
@@ -58,6 +64,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   studentSubmissions: [],
   resources: [],
   badges: [],
+  rewardRedemptions: [],
   initialized: false,
 
   init: () => {
@@ -76,6 +83,7 @@ export const useDataStore = create<DataState>((set, get) => ({
       studentSubmissions: [],
       resources: seedResources,
       badges: [...seedBadges],
+      rewardRedemptions: [],
       initialized: true,
     })
   },
@@ -131,6 +139,31 @@ export const useDataStore = create<DataState>((set, get) => ({
     }
   },
 
+  retrySubmission: (taskId, studentId) => {
+    // Удаляем старую неправильную посылку, чтобы можно было ответить заново
+    set((s) => ({
+      studentSubmissions: s.studentSubmissions.filter(
+        (sub) => !(sub.assignment_task_id === taskId && sub.student_id === studentId)
+      ),
+    }))
+  },
+
+  redeemReward: (rewardId, studentId) => {
+    const available = get().getStudentAvailablePoints(studentId)
+    const reward = BONUS_CONFIG.rewards.find((r) => r.id === rewardId)
+    if (!reward || available < reward.cost) return false
+
+    const redemption: RewardRedemption = {
+      id: `redeem-${Date.now()}`,
+      student_id: studentId,
+      reward_id: rewardId,
+      redeemed_at: new Date().toISOString(),
+      status: 'pending',
+    }
+    set((s) => ({ rewardRedemptions: [...s.rewardRedemptions, redemption] }))
+    return true
+  },
+
   getAssignmentsByStudent: (studentId) => {
     return get().assignments.filter((a) => a.student_id === studentId && a.is_active)
   },
@@ -154,7 +187,7 @@ export const useDataStore = create<DataState>((set, get) => ({
       const task = tasks.find((t) => t.id === sub.assignment_task_id)
       if (!task) continue
       if (sub.is_correct === true) {
-        points += BONUS_CONFIG.points_per_correct
+        points += sub.is_retry ? BONUS_CONFIG.points_per_retry : BONUS_CONFIG.points_per_correct
       } else if (sub.is_correct === false) {
         points += BONUS_CONFIG.points_per_attempt
       } else {
@@ -174,6 +207,18 @@ export const useDataStore = create<DataState>((set, get) => ({
     }
 
     return points
+  },
+
+  getStudentSpentPoints: (studentId) => {
+    const redemptions = get().rewardRedemptions.filter((r) => r.student_id === studentId)
+    return redemptions.reduce((sum, r) => {
+      const reward = BONUS_CONFIG.rewards.find((rw) => rw.id === r.reward_id)
+      return sum + (reward?.cost || 0)
+    }, 0)
+  },
+
+  getStudentAvailablePoints: (studentId) => {
+    return get().getStudentPoints(studentId) - get().getStudentSpentPoints(studentId)
   },
 
   getStudentLevel: (studentId) => {
@@ -217,6 +262,14 @@ export const useDataStore = create<DataState>((set, get) => ({
     }
     if (!has('points_250') && points >= 250) {
       newBadges.push({ id: `badge-${Date.now()}-4`, student_id: studentId, badge_type: 'points_250', earned_at: now })
+    }
+
+    // Speed demon badge — решил задачу за 30 секунд
+    if (!has('speed_demon')) {
+      const fastSub = subs.find((s) => s.is_correct === true && s.time_spent_seconds && s.time_spent_seconds <= BONUS_CONFIG.speed_bonus_seconds)
+      if (fastSub) {
+        newBadges.push({ id: `badge-${Date.now()}-7`, student_id: studentId, badge_type: 'speed_demon', earned_at: now })
+      }
     }
 
     if (!has('perfect_assignment')) {

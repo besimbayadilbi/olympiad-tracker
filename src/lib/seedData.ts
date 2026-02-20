@@ -919,11 +919,13 @@ export const seedAssignmentTasks: AssignmentTask[] = [
 export const BONUS_CONFIG = {
   // Баллы за задания
   points_per_correct: 10,        // правильный ответ
+  points_per_retry: 5,           // правильный ответ с повторной попытки
   points_per_attempt: 2,         // попытка (даже неверная)
   points_per_open_ended: 5,      // отправка open_ended задачи
   points_perfect_bonus: 15,      // бонус за 100% в задании
   streak_bonus_3: 20,            // бонус за 3 дня подряд
   streak_bonus_7: 50,            // бонус за 7 дней подряд
+  speed_bonus_seconds: 30,       // если решил задачу за 30 сек — бонус "Молния"
 
   // Уровни
   levels: [
@@ -941,10 +943,24 @@ export const BONUS_CONFIG = {
     streak_3:           { name: '3 дня подряд',     emoji: '🔥', description: 'Решал задачи 3 дня подряд' },
     streak_7:           { name: 'Неделя огня',      emoji: '💪', description: '7 дней подряд!' },
     perfect_assignment: { name: 'Без ошибок',       emoji: '💯', description: 'Все верно в одном задании' },
-    speed_demon:        { name: 'Молния',           emoji: '⚡', description: 'Решил 5 задач за 10 минут' },
+    speed_demon:        { name: 'Молния',           emoji: '⚡', description: 'Решил задачу за 30 секунд' },
     points_50:          { name: 'Полтинник',        emoji: '🎲', description: 'Набрал 50 баллов' },
     points_100:         { name: 'Сотка',            emoji: '💎', description: 'Набрал 100 баллов' },
     points_250:         { name: 'Четверть тысячи',  emoji: '🌟', description: 'Набрал 250 баллов' },
     olympiad_ready:     { name: 'Готов к FEMO',     emoji: '🏅', description: 'Прошёл все задания перед олимпиадой' },
   } as Record<string, { name: string; emoji: string; description: string }>,
+
+  // Магазин наград
+  rewards: [
+    { id: 'reward-1', title: 'Blooket на уроке', description: 'Играем в Blooket 15 минут на следующем уроке!', cost: 30, emoji: '🎮', category: 'lesson' as const },
+    { id: 'reward-2', title: 'Kahoot на уроке', description: 'Устраиваем Kahoot-баттл на следующем уроке!', cost: 30, emoji: '🏁', category: 'lesson' as const },
+    { id: 'reward-3', title: 'Выбор темы урока', description: 'Ты выбираешь тему следующего урока!', cost: 50, emoji: '📝', category: 'privilege' as const },
+    { id: 'reward-4', title: 'Без д/з', description: 'Один урок без домашнего задания', cost: 60, emoji: '🎉', category: 'privilege' as const },
+    { id: 'reward-5', title: 'Стикерпак', description: 'Набор крутых стикеров по математике', cost: 40, emoji: '🏷️', category: 'gift' as const },
+    { id: 'reward-6', title: 'Головоломка', description: 'Мини-головоломка в подарок (кубик Рубика, танграм)', cost: 80, emoji: '🧩', category: 'gift' as const },
+    { id: 'reward-7', title: 'Дополнительная игра', description: '20 минут математической игры на уроке', cost: 25, emoji: '🎲', category: 'lesson' as const },
+    { id: 'reward-8', title: 'Сертификат мастера', description: 'Именной сертификат "Мастер математики"', cost: 100, emoji: '🏆', category: 'gift' as const },
+  ],
 }
+
+export type { }

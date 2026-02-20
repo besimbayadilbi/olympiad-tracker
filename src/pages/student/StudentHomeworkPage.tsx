@@ -157,6 +157,23 @@ export default function StudentHomeworkPage() {
         </div>
       )}
 
+      {/* Магазин наград */}
+      <Link
+        to="/student/shop"
+        className="block bg-gradient-to-r from-accent/10 to-yellow-50 rounded-2xl border border-accent/20 p-4 hover:shadow-md transition"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🛍️</span>
+            <div>
+              <h3 className="font-bold text-sm text-primary">Магазин наград</h3>
+              <p className="text-xs text-text-secondary">Обменяй баллы на призы!</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-accent" />
+        </div>
+      </Link>
+
       {/* Как заработать баллы */}
       <div className="bg-gradient-to-br from-accent/5 to-yellow-50 rounded-2xl border border-accent/20 p-4">
         <h3 className="font-bold text-sm text-primary mb-2 flex items-center gap-1.5">
@@ -169,6 +186,10 @@ export default function StudentHomeworkPage() {
             <span>Верный ответ</span>
           </div>
           <div className="flex items-center gap-1.5">
+            <span className="w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-[10px] font-bold">+{BONUS_CONFIG.points_per_retry}</span>
+            <span>Верно с 2-й попытки</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <span className="w-5 h-5 rounded-full bg-warning/20 text-warning flex items-center justify-center text-[10px] font-bold">+{BONUS_CONFIG.points_per_attempt}</span>
             <span>Попытка</span>
           </div>
@@ -179,6 +200,10 @@ export default function StudentHomeworkPage() {
           <div className="flex items-center gap-1.5">
             <span className="w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-[10px] font-bold">+{BONUS_CONFIG.points_perfect_bonus}</span>
             <span>100% в задании</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-5 h-5 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-[10px] font-bold">⚡</span>
+            <span>Молния (за 30 сек)</span>
           </div>
         </div>
       </div>

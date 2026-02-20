@@ -23,8 +23,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-accent/10 rounded-2xl mb-4">
             <GraduationCap className="w-8 h-8 text-accent" />
           </div>
-          <h1 className="text-2xl font-bold text-primary">МатМастер</h1>
-          <p className="text-text-secondary mt-1">Платформа для занятий математикой</p>
+          <h1 className="text-2xl font-bold text-primary">Трекер Занятий</h1>
+          <p className="text-text-secondary mt-1">Платформа для занятий</p>
         </div>
 
         {/* Форма входа */}

@@ -1,6 +1,6 @@
-// AI-сервис через Anthropic Claude API
+// AI-сервис через Grok (xAI API)
 
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || ''
+const XAI_API_KEY = import.meta.env.VITE_XAI_API_KEY || ''
 
 interface GenerateQuestionsParams {
   topic: string
@@ -21,7 +21,7 @@ interface AutoFillParams {
   studentName: string
   grade: number
   topic: string
-  briefNote: string // краткое описание урока от учителя
+  briefNote: string
 }
 
 interface AutoFillResult {
@@ -33,33 +33,34 @@ interface AutoFillResult {
   teacher_comment_parent: string
 }
 
-async function callClaude(systemPrompt: string, userMessage: string): Promise<string> {
-  if (!ANTHROPIC_API_KEY) {
-    throw new Error('API ключ не настроен. Добавьте VITE_ANTHROPIC_API_KEY в .env')
+async function callGrok(systemPrompt: string, userMessage: string): Promise<string> {
+  if (!XAI_API_KEY) {
+    throw new Error('API ключ не настроен. Добавьте VITE_XAI_API_KEY в .env')
   }
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
+      'Authorization': `Bearer ${XAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
+      model: 'grok-3-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      temperature: 0.7,
     }),
   })
 
   if (!response.ok) {
-    throw new Error(`API ошибка: ${response.status}`)
+    const errText = await response.text()
+    throw new Error(`API ошибка: ${response.status} — ${errText}`)
   }
 
   const data = await response.json()
-  return data.content[0].text
+  return data.choices[0].message.content
 }
 
 export async function generateQuestions(params: GenerateQuestionsParams): Promise<GeneratedQuestion[]> {
@@ -78,10 +79,9 @@ export async function generateQuestions(params: GenerateQuestionsParams): Promis
   "points": ${params.difficulty === 'easy' ? 1 : params.difficulty === 'medium' ? 2 : 3}
 }`
 
-  const response = await callClaude(systemPrompt, userMessage)
+  const response = await callGrok(systemPrompt, userMessage)
 
   try {
-    // Пробуем извлечь JSON из ответа
     const jsonMatch = response.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0])
@@ -94,7 +94,7 @@ export async function generateQuestions(params: GenerateQuestionsParams): Promis
 }
 
 export async function autoFillLessonResult(params: AutoFillParams): Promise<AutoFillResult> {
-  const systemPrompt = `Ты — помощник учителя олимпиадной математики. На основе краткой заметки учителя об уроке, заполни карточку урока.
+  const systemPrompt = `Ты — помощник учителя математики. На основе краткой заметки учителя об уроке, заполни карточку урока.
 Ученик: ${params.studentName}, ${params.grade} класс.
 Тема урока: ${params.topic}.
 Отвечай ТОЛЬКО JSON объектом, без markdown, без комментариев.`
@@ -107,11 +107,11 @@ export async function autoFillLessonResult(params: AutoFillParams): Promise<Auto
   "tasks_solved": <число, сколько задач решали>,
   "tasks_correct": <число, сколько верно>,
   "homework_given": "описание д/з",
-  "teacher_comment_private": "заметка для себя",
-  "teacher_comment_parent": "комментарий для родителя (позитивный, ободряющий)"
+  "teacher_comment_private": "заметка для себя (кратко, по делу)",
+  "teacher_comment_parent": "комментарий для родителя (позитивный, ободряющий, 2-3 предложения)"
 }`
 
-  const response = await callClaude(systemPrompt, userMessage)
+  const response = await callGrok(systemPrompt, userMessage)
 
   try {
     const jsonMatch = response.match(/\{[\s\S]*\}/)
@@ -126,5 +126,5 @@ export async function autoFillLessonResult(params: AutoFillParams): Promise<Auto
 }
 
 export function isAIConfigured(): boolean {
-  return !!ANTHROPIC_API_KEY
+  return !!XAI_API_KEY
 }

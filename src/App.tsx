@@ -17,6 +17,7 @@ import AssignmentsPage from '@/pages/teacher/AssignmentsPage'
 import ParentDashboardPage from '@/pages/parent/ParentDashboardPage'
 import StudentHomeworkPage from '@/pages/student/StudentHomeworkPage'
 import StudentTaskPage from '@/pages/student/StudentTaskPage'
+import RewardShopPage from '@/pages/student/RewardShopPage'
 import StudentAccessPage from '@/pages/student/StudentAccessPage'
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
               <Route path="/student" element={<StudentLayout />}>
                 <Route index element={<StudentHomeworkPage />} />
                 <Route path="task/:assignmentId" element={<StudentTaskPage />} />
+                <Route path="shop" element={<RewardShopPage />} />
               </Route>
             )}
 
