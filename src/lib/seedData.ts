@@ -917,24 +917,24 @@ export const seedAssignmentTasks: AssignmentTask[] = [
 
 // === БОНУСНАЯ СИСТЕМА: конфигурация ===
 export const BONUS_CONFIG = {
-  // Баллы за задания
-  points_per_correct: 10,        // правильный ответ
-  points_per_retry: 5,           // правильный ответ с повторной попытки
-  points_per_attempt: 2,         // попытка (даже неверная)
-  points_per_open_ended: 5,      // отправка open_ended задачи
-  points_perfect_bonus: 15,      // бонус за 100% в задании
-  streak_bonus_3: 20,            // бонус за 3 дня подряд
-  streak_bonus_7: 50,            // бонус за 7 дней подряд
+  // Баллы за задания (3 задачи = макс 10 баллов: 3×3 + 1 бонус)
+  points_per_correct: 3,         // правильный ответ
+  points_per_retry: 2,           // правильный ответ с повторной попытки
+  points_per_attempt: 1,         // попытка (даже неверная)
+  points_per_open_ended: 2,      // отправка open_ended задачи
+  points_perfect_bonus: 1,       // бонус за 100% в задании
+  streak_bonus_3: 5,             // бонус за 3 дня подряд
+  streak_bonus_7: 15,            // бонус за 7 дней подряд
   speed_bonus_seconds: 30,       // если решил задачу за 30 сек — бонус "Молния"
 
   // Уровни
   levels: [
     { name: 'Новичок', min_points: 0, emoji: '🌱' },
-    { name: 'Ученик', min_points: 30, emoji: '📚' },
-    { name: 'Решатель', min_points: 80, emoji: '🧩' },
-    { name: 'Мастер', min_points: 150, emoji: '⭐' },
-    { name: 'Олимпиадник', min_points: 250, emoji: '🏆' },
-    { name: 'Чемпион FEMO', min_points: 400, emoji: '🥇' },
+    { name: 'Ученик', min_points: 10, emoji: '📚' },
+    { name: 'Решатель', min_points: 25, emoji: '🧩' },
+    { name: 'Мастер', min_points: 50, emoji: '⭐' },
+    { name: 'Олимпиадник', min_points: 80, emoji: '🏆' },
+    { name: 'Чемпион FEMO', min_points: 130, emoji: '🥇' },
   ],
 
   // Бейджи
@@ -952,14 +952,14 @@ export const BONUS_CONFIG = {
 
   // Магазин наград
   rewards: [
-    { id: 'reward-1', title: 'Blooket на уроке', description: 'Играем в Blooket 15 минут на следующем уроке!', cost: 30, emoji: '🎮', category: 'lesson' as const },
-    { id: 'reward-2', title: 'Kahoot на уроке', description: 'Устраиваем Kahoot-баттл на следующем уроке!', cost: 30, emoji: '🏁', category: 'lesson' as const },
-    { id: 'reward-3', title: 'Выбор темы урока', description: 'Ты выбираешь тему следующего урока!', cost: 50, emoji: '📝', category: 'privilege' as const },
-    { id: 'reward-4', title: 'Без д/з', description: 'Один урок без домашнего задания', cost: 60, emoji: '🎉', category: 'privilege' as const },
-    { id: 'reward-5', title: 'Стикерпак', description: 'Набор крутых стикеров по математике', cost: 40, emoji: '🏷️', category: 'gift' as const },
-    { id: 'reward-6', title: 'Головоломка', description: 'Мини-головоломка в подарок (кубик Рубика, танграм)', cost: 80, emoji: '🧩', category: 'gift' as const },
-    { id: 'reward-7', title: 'Дополнительная игра', description: '20 минут математической игры на уроке', cost: 25, emoji: '🎲', category: 'lesson' as const },
-    { id: 'reward-8', title: 'Сертификат мастера', description: 'Именной сертификат "Мастер математики"', cost: 100, emoji: '🏆', category: 'gift' as const },
+    { id: 'reward-1', title: 'Blooket на уроке', description: 'Играем в Blooket 15 минут на следующем уроке!', cost: 10, emoji: '🎮', category: 'lesson' as const },
+    { id: 'reward-2', title: 'Kahoot на уроке', description: 'Устраиваем Kahoot-баттл на следующем уроке!', cost: 10, emoji: '🏁', category: 'lesson' as const },
+    { id: 'reward-3', title: 'Выбор темы урока', description: 'Ты выбираешь тему следующего урока!', cost: 16, emoji: '📝', category: 'privilege' as const },
+    { id: 'reward-4', title: 'Без д/з', description: 'Один урок без домашнего задания', cost: 20, emoji: '🎉', category: 'privilege' as const },
+    { id: 'reward-5', title: 'Стикерпак', description: 'Набор крутых стикеров по математике', cost: 13, emoji: '🏷️', category: 'gift' as const },
+    { id: 'reward-6', title: 'Головоломка', description: 'Мини-головоломка в подарок (кубик Рубика, танграм)', cost: 25, emoji: '🧩', category: 'gift' as const },
+    { id: 'reward-7', title: 'Дополнительная игра', description: '20 минут математической игры на уроке', cost: 8, emoji: '🎲', category: 'lesson' as const },
+    { id: 'reward-8', title: 'Сертификат мастера', description: 'Именной сертификат "Мастер математики"', cost: 33, emoji: '🏆', category: 'gift' as const },
   ],
 }
 
