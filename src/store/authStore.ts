@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { User } from '@/types/database'
 import { seedStudents } from '@/lib/seedData'
 
@@ -62,62 +63,73 @@ interface AuthState {
   logout: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  studentId: null,
-  loading: false,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      studentId: null,
+      loading: false,
 
-  login: async (username: string, password: string) => {
-    set({ loading: true })
-    const found = USERS.find(
-      (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password
-    )
-    if (found) {
-      set({ user: found.user, studentId: found.studentId || null, loading: false })
-      return true
-    }
-    set({ loading: false })
-    return false
-  },
-
-  loginAsDemo: (role) => {
-    if (role === 'student') {
-      const student = seedStudents[0]
-      set({
-        user: {
-          id: student.id,
-          username: '',
-          role: 'student',
-          name: student.name,
-          created_at: new Date().toISOString(),
-        },
-        studentId: student.id,
-      })
-    } else {
-      const found = USERS.find((u) => u.user.role === role)
-      if (found) {
-        set({ user: found.user, studentId: null })
-      }
-    }
-  },
-
-  loginByToken: (token: string) => {
-    const student = seedStudents.find((s) => s.access_token === token)
-    if (!student) return false
-    set({
-      user: {
-        id: student.id,
-        username: '',
-        role: 'student',
-        name: student.name,
-        created_at: new Date().toISOString(),
+      login: async (username: string, password: string) => {
+        set({ loading: true })
+        const found = USERS.find(
+          (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+        )
+        if (found) {
+          set({ user: found.user, studentId: found.studentId || null, loading: false })
+          return true
+        }
+        set({ loading: false })
+        return false
       },
-      studentId: student.id,
-    })
-    return true
-  },
 
-  logout: () => {
-    set({ user: null, studentId: null })
-  },
-}))
+      loginAsDemo: (role) => {
+        if (role === 'student') {
+          const student = seedStudents[0]
+          set({
+            user: {
+              id: student.id,
+              username: '',
+              role: 'student',
+              name: student.name,
+              created_at: new Date().toISOString(),
+            },
+            studentId: student.id,
+          })
+        } else {
+          const found = USERS.find((u) => u.user.role === role)
+          if (found) {
+            set({ user: found.user, studentId: null })
+          }
+        }
+      },
+
+      loginByToken: (token: string) => {
+        const student = seedStudents.find((s) => s.access_token === token)
+        if (!student) return false
+        set({
+          user: {
+            id: student.id,
+            username: '',
+            role: 'student',
+            name: student.name,
+            created_at: new Date().toISOString(),
+          },
+          studentId: student.id,
+        })
+        return true
+      },
+
+      logout: () => {
+        set({ user: null, studentId: null })
+      },
+    }),
+    {
+      name: 'tracker-auth',
+      partialize: (state) => ({
+        user: state.user,
+        studentId: state.studentId,
+      }),
+    }
+  )
+)
